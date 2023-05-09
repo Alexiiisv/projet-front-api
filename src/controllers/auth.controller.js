@@ -2,12 +2,11 @@ const User = require("../models/user.model");
 const Company = require("../models/company.model");
 const Freelance = require("../models/freelance.model");
 const bcrypt = require("bcrypt");
-const sendMail = require('../utils/sendMail');
-const signJwt = require('../utils/signJwt');
+const sendMail = require("../utils/sendMail");
+const signJwt = require("../utils/signJwt");
 
 //register a user
 exports.register = async (req, res, next) => {
-
   const newUser = new User({
     firstName: req.body.firstName,
     lastName: req.body.lastName,
@@ -18,8 +17,8 @@ exports.register = async (req, res, next) => {
     address: {
       city: req.body.address.city,
       zipCode: req.body.address.zipCode,
-      street: req.body.address.street
-    }
+      street: req.body.address.street,
+    },
   });
   console.log(newUser);
   try {
@@ -30,7 +29,7 @@ exports.register = async (req, res, next) => {
       id: newUserToSave._id,
       isAdmin: newUserToSave.isAdmin,
       userType: newUserToSave.userType,
-    })
+    });
     if (userToken) {
       //send email to new user
       await sendMail(
@@ -39,7 +38,7 @@ exports.register = async (req, res, next) => {
         `Hello ${newUser.firstName}`,
         "Votre inscription est confirmée."
       );
-      //send email to Admin 
+      //send email to Admin
       await sendMail(
         process.env.ADMIN_EMAIL,
         "[Admin] - Confirmation d'inscription",
@@ -51,15 +50,13 @@ exports.register = async (req, res, next) => {
         success: true,
         message: "User logged",
         auth: true,
-        token: userToken
-      })
+        token: userToken,
+      });
     }
-  }
-  catch (err) {
+  } catch (err) {
     next(err);
   }
-
-}
+};
 
 //login user
 exports.login = async (req, res, next) => {
@@ -68,16 +65,19 @@ exports.login = async (req, res, next) => {
     const userLogged = await User.findOne({ email: req.body.email });
     //throw error if no user
     if (!userLogged) {
-      const error = new Error("user not found")
-      error.status = 404
+      const error = new Error("user not found");
+      error.status = 404;
       throw error;
     }
     //compare password
-    let passwordValid = bcrypt.compareSync(req.body.password, userLogged.password);
+    let passwordValid = bcrypt.compareSync(
+      req.body.password,
+      userLogged.password
+    );
     //if no password throw error
     if (!passwordValid) {
-      const error = new Error("password not valid")
-      error.status = 401
+      const error = new Error("password not valid");
+      error.status = 401;
       throw error;
     }
     //sign jwt
@@ -85,19 +85,18 @@ exports.login = async (req, res, next) => {
       id: userLogged._id,
       isAdmin: userLogged.isAdmin,
       userType: userLogged.userType,
-    })
+    });
     // return token
     return res.send({
       success: true,
       message: "User logged",
       auth: true,
-      token: userToken
-    })
-  }
-  catch (err) {
+      token: userToken,
+    });
+  } catch (err) {
     next(err);
   }
-}
+};
 
 //register a user with user type freelance
 exports.registerFreelance = async (req, res, next) => {
@@ -108,12 +107,12 @@ exports.registerFreelance = async (req, res, next) => {
     const newFreelance = new Freelance({
       rate: req.body.rate,
       yearOfExperience: req.body.yearOfExperience,
-      user: req.userToken.body.id
+      user: req.userToken.body.id,
     });
     //if user already have a freelance acccount
     if (me.freelance) {
-      const error = new Error("User already have a freelance account")
-      error.status = 400
+      const error = new Error("User already have a freelance account");
+      error.status = 400;
       throw error;
     }
     // save the freelance in db
@@ -125,20 +124,18 @@ exports.registerFreelance = async (req, res, next) => {
     res.send({
       success: true,
       message: "freelance successfully create",
-      freelance: newFreelanceToSave
-    })
-  }
-  catch (err) {
+      freelance: newFreelanceToSave,
+    });
+  } catch (err) {
     next(err);
   }
-}
+};
 
 //register a company with user type company
 exports.registerCompany = async (req, res, next) => {
-
   //get the user who want to register Company
   const me = await User.findById(req.userToken.body.id);
-  
+
   // create a new Company instance
   const newCompany = new Company({
     name: req.body.name,
@@ -147,16 +144,16 @@ exports.registerCompany = async (req, res, next) => {
     address: {
       city: req.body.address.city,
       zipCode: req.body.address.zipCode,
-      street: req.body.address.street
+      street: req.body.address.street,
     },
-    user: me._id
-  })
+    user: me._id,
+  });
 
   try {
     //if user already have a company account
     if (me.company) {
-      const error = new Error("User already have a company account")
-      error.status = 400
+      const error = new Error("User already have a company account");
+      error.status = 400;
       throw error;
     }
     // save company in DB
@@ -168,10 +165,9 @@ exports.registerCompany = async (req, res, next) => {
     res.send({
       success: true,
       message: "company successfully create",
-      company: newCompanyToSave
-    })
-  }
-  catch (err) {
+      company: newCompanyToSave,
+    });
+  } catch (err) {
     next(err);
   }
-}
+};
